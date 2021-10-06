@@ -1,18 +1,35 @@
 import "reflect-metadata";
-import {createConnection, getConnection} from "typeorm";
+import {createConnection} from "typeorm";
 import {User} from "./entity/User";
+import * as console from "console";
+
+const express = require('express');
+const app = express();
+const port = process.env.PORT || 3001;
 
 createConnection().then(async connection => {
-    let user = new User();
-    user.email = "TestEmail@gmail.com";
-    user.password = "password";
-    // user.name = "testName"
+    connection.manager.find(User).then(user =>{
+        console.log(user);
+        }
+    )
 
-    return connection.manager
-        .save(user)
-        .then(user => {
-            console.log(user.email + " : " + user.id)
-        });
+    // router.post("/", (req, res) => {
+    //     const {id} = req.body;
+    //     if (id.valid()) {
+    //         res.json({message: "OK"})
+    //     } else {
+    //         res.json({message: "Not OK ..."})
+    //     }
+    // })
+
+    app.get('/', async function (req, res) {
+        res.send('hello~');
+    })
+
+    app.listen(port, () => {
+        console.log('####Express listening on port####', port);
+    });
+
 }).catch(error => {
     console.log(error)
 });
