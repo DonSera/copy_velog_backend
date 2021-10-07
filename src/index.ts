@@ -31,6 +31,7 @@ createConnection().then(async connection => {
     };
 
     app.post('/login', async (req, res) => {
+        // 초기화
         userInfo.email = undefined;
         userInfo.name = undefined;
         userInfo.status = false;
@@ -58,16 +59,18 @@ createConnection().then(async connection => {
     });
 
     app.post('/signup', async (req, res) => {
+        // 초기화
         userInfo.email = undefined;
         userInfo.name = undefined;
         userInfo.status = false;
 
         const inputEmail = req.body.email;
-        const inputPassword = req.body.password;
+        const inputPassword = req.body.password;가
 
         if (await repository.findOne({email: inputEmail})) {
             userInfo.message = "this email already exist"
         } else {
+            // 이메일, 비밀번호, 기본이름 저장
             const user = new User();
             user.email = inputEmail;
             user.password = inputPassword;
@@ -75,6 +78,7 @@ createConnection().then(async connection => {
             await repository.save(user);
             const userObj = await repository.findOne({email: inputEmail})
 
+            // 저장된 값으로 부르기
             userInfo.email = userObj.email;
             userInfo.name = userObj.name;
             userInfo.status = true;
