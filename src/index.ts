@@ -65,7 +65,7 @@ createConnection().then(async connection => {
         userInfo.status = false;
 
         const inputEmail = req.body.email;
-        const inputPassword = req.body.password;가
+        const inputPassword = req.body.password;
 
         if (await repository.findOne({email: inputEmail})) {
             userInfo.message = "this email already exist"
