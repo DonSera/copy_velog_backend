@@ -22,19 +22,20 @@ app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
 createConnection().then(async connection => {
-    app.post('/login', async (req, res) => {
-        const userInfo = {
-            email: undefined,
-            name: undefined,
-            status: false,
-            message: ""
-        };
+    const repository = connection.getRepository(User);
+    const userInfo = {
+        email: undefined,
+        name: undefined,
+        status: false,
+        message: ""
+    };
 
+    app.post('/login', async (req, res) => {
         const inputEmail = req.body.email;
         const inputPassword = req.body.password;
 
         try {
-            const userObj = await User.findOne({email: inputEmail})
+            const userObj = await repository.findOne({email: inputEmail})
             if (userObj.password === inputPassword) {
                 // 성공 했을 때만 이메일과 이름을 넣어 보낸다.
                 userInfo.email = userObj.email
@@ -51,6 +52,30 @@ createConnection().then(async connection => {
         console.log(userInfo.message);
         res.json(userInfo);
     });
+
+    app.post('/signup', async (req, res) => {
+        const inputEmail = req.body.email;
+        const inputPassword = req.body.password;
+
+        if (await repository.findOne({email: inputEmail})) {
+            userInfo.message = "this email already exist"
+        } else {
+            const user = new User();
+            user.email = inputEmail;
+            user.password = inputPassword;
+            user.name = 'defaultName';
+            await repository.save(user);
+            const userObj = await repository.findOne({email: inputEmail})
+
+            userInfo.email = userObj.email;
+            userInfo.name = userObj.name;
+            userInfo.status = true;
+            userInfo.message = "Sign up success"
+        }
+        console.log(userInfo.message);
+        res.json(userInfo);
+    });
+
 
     app.get('/', async function (req, res) {
         res.send("get '/' server");
