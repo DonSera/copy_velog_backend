@@ -31,6 +31,10 @@ createConnection().then(async connection => {
     };
 
     app.post('/login', async (req, res) => {
+        userInfo.email = undefined;
+        userInfo.name = undefined;
+        userInfo.status = false;
+
         const inputEmail = req.body.email;
         const inputPassword = req.body.password;
 
@@ -54,6 +58,10 @@ createConnection().then(async connection => {
     });
 
     app.post('/signup', async (req, res) => {
+        userInfo.email = undefined;
+        userInfo.name = undefined;
+        userInfo.status = false;
+
         const inputEmail = req.body.email;
         const inputPassword = req.body.password;
 
