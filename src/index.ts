@@ -34,7 +34,7 @@ createConnection().then(async connection => {
         const inputEmail = req.body.email;
         const inputPassword = req.body.password;
 
-        try {
+        if (await repository.findOne({email: inputEmail})) {
             const userObj = await repository.findOne({email: inputEmail})
             if (userObj.password === inputPassword) {
                 // 성공 했을 때만 이메일과 이름을 넣어 보낸다.
@@ -45,10 +45,10 @@ createConnection().then(async connection => {
             } else {
                 userInfo.message = "password miss match";
             }
-        } catch (err) {
+        } else {
             userInfo.message = 'email miss match';
-            console.log(err);
         }
+
         console.log(userInfo.message);
         res.json(userInfo);
     });
