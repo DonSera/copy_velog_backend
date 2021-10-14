@@ -44,6 +44,30 @@ createConnection().then(async connection => {
         }
     }
 
+    app.post('/newName', async (req, res) => {
+        const message = {status: false, message: "Can not find User"};
+
+        const inputId = req.body.id;
+        const inputEmail = req.body.email;
+        const inputPW = req.body.password;
+        const inputNewName = req.body.name;
+
+        if (await repository.findOne({email: inputEmail, password: inputPW})) {
+            // 입력 이메일과 비밀번호가 존재함
+            if (await repository.findOne({id: inputId})) {
+                const userObj = await repository.findOne({id: inputId});
+                userObj.name = inputNewName;
+                await repository.save(userObj);
+                message.status = true;
+                message.message = "Name change success";
+            }
+        } else {
+            message.message = "password miss match"
+        }
+        console.log(message.message);
+        res.json(message);
+    });
+
     app.post('/id', async (req, res) => {
         initially();
 
