@@ -23,29 +23,28 @@ app.use(bodyParser.json());
 
 createConnection().then(async connection => {
     const repository = connection.getRepository(User);
-    const userInfo = {
-        email: undefined,
-        name: undefined,
-        id: undefined,
-        status: false,
-        message: ""
-    };
 
-    function initially() {
-        userInfo.email = undefined;
-        userInfo.name = undefined;
-        userInfo.id = undefined;
-        userInfo.status = false;
+    function initiallyUserInfo() {
+        return {
+            email: undefined,
+            name: undefined,
+            id: undefined,
+            status: false,
+            message: "Undefined user"
+        };
     }
 
-    function setInfo(object) {
-        for (const key in object) {
-            userInfo[key] = object[key];
+    function setInfo(originObj, newObj) {
+        for (const key in newObj) {
+            originObj[key] = newObj[key];
         }
     }
 
     app.post('/newName', async (req, res) => {
-        const message = {status: false, message: "Can not find User"};
+        const message = {
+            status: false,
+            message: "Can not find User"
+        };
 
         const inputId = req.body.id;
         const inputEmail = req.body.email;
@@ -58,6 +57,7 @@ createConnection().then(async connection => {
                 const userObj = await repository.findOne({id: inputId});
                 userObj.name = inputNewName;
                 await repository.save(userObj);
+
                 message.status = true;
                 message.message = "Name change success";
             }
@@ -69,13 +69,13 @@ createConnection().then(async connection => {
     });
 
     app.post('/id', async (req, res) => {
-        initially();
+        const userInfo = initiallyUserInfo();
 
         const inputId = req.body.id;
 
         if (await repository.findOne({id: inputId})) {
             const userObj = await repository.findOne({id: inputId});
-            setInfo({
+            setInfo(userInfo, {
                 email: userObj.email,
                 name: userObj.name,
                 id: userObj.id,
@@ -83,14 +83,14 @@ createConnection().then(async connection => {
                 message: "Auto login success"
             });
         } else {
-            setInfo({message: "Id miss match"});
+            setInfo(userInfo, {message: "Id miss match"});
         }
         console.log(userInfo.message);
         res.json(userInfo);
     });
 
     app.post('/login', async (req, res) => {
-        initially();
+        const userInfo = initiallyUserInfo();
 
         const inputEmail = req.body.email;
         const inputPassword = req.body.password;
@@ -99,7 +99,7 @@ createConnection().then(async connection => {
             const userObj = await repository.findOne({email: inputEmail})
             if (userObj.password === inputPassword) {
                 // 성공 했을 때만 이메일과 이름을 넣어 보낸다.
-                setInfo({
+                setInfo(userInfo, {
                     email: userObj.email,
                     name: userObj.name,
                     id: userObj.id,
@@ -107,23 +107,23 @@ createConnection().then(async connection => {
                     message: "Login success"
                 });
             } else {
-                setInfo({message: "password miss match"});
+                setInfo(userInfo, {message: "password miss match"});
             }
         } else {
-            setInfo({message: "email miss match"});
+            setInfo(userInfo, {message: "email miss match"});
         }
         console.log(userInfo.message);
         res.json(userInfo);
     });
 
     app.post('/signup', async (req, res) => {
-        initially();
+        const userInfo = initiallyUserInfo();
 
         const inputEmail = req.body.email;
         const inputPassword = req.body.password;
 
         if (await repository.findOne({email: inputEmail})) {
-            setInfo({message: "this email already exist"});
+            setInfo(userInfo, {message: "this email already exist"});
         } else {
             // 이메일, 비밀번호, 기본이름 저장
             const user = new User();
@@ -134,7 +134,7 @@ createConnection().then(async connection => {
             const userObj = await repository.findOne({email: inputEmail});
 
             // 저장된 값으로 부르기
-            setInfo({
+            setInfo(userInfo, {
                 email: userObj.email,
                 name: userObj.name,
                 id: userObj.id,
