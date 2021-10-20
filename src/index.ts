@@ -184,7 +184,6 @@ createConnection().then(async connection => {
                         board: boardInfo
                     })
             } else {
-                console.log("there is  Id")
                 postInfo = await postRepo.findOne({id: req.body.id});
                 const writerInfo = await userRepo.findOne({id: postInfo.writerId});
                 message = "get postInfo success";
@@ -239,6 +238,25 @@ createConnection().then(async connection => {
         }
 
         console.log(message);
+    })
+
+    app.get('/myPage', async (req, res) => {
+        const json = {info: [], status: false, message: 'Can not find'};
+        const userName = req.query.name;
+        try {
+            if (await userRepo.findOne({name: userName})) {
+                const userInfo = await userRepo.findOne({name: userName});
+                const userId = userInfo.id;
+                json.info = await postRepo.find({where: {writerId: userId}, order: {date: "DESC"}});
+                json.status = true;
+                json.message = "get my page post info success";
+                res.json(json);
+            }
+        } catch (e) {
+            console.log(e);
+            res.json(json);
+        }
+        console.log(json.message);
     })
 
 
