@@ -161,10 +161,16 @@ createConnection().then(async connection => {
                 for (let index = 0; index < postInfo.length; index++) {
                     const post = postInfo[index];
                     const writerInfo = await userRepo.findOne({id: post.writerId});
+
+                    let subTitle = post.subTitle;
+                    if (post.subTitle === '') {
+                        subTitle = post.content.split('\n')[0];
+                    }
+
                     boardInfo.push({
                         id: post.id,
                         title: post.title,
-                        subTitle: post.subTitle,
+                        subTitle: subTitle,
                         img: "",
                         date: post.date,
                         writerInfo: {
