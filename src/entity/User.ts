@@ -13,7 +13,7 @@ export class User extends BaseEntity {
     @Column({type: "varchar", nullable: false})
     password: string;
 
-    @Column({type: "varchar", nullable: true})
+    @Column({type: "varchar", nullable: true, unique: true})
     name: string;
 
     @OneToMany(() => Post, post => post.writerId)
