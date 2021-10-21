@@ -4,24 +4,24 @@ import {User} from "./User";
 @Entity('post')
 export class Post extends BaseEntity {
 
-    @PrimaryGeneratedColumn()
+    @PrimaryGeneratedColumn({type: "int"})
     id: number;
 
-    @Column({nullable: false})
+    @Column({type: "varchar", nullable: false})
     date: string;
 
-    @Column({nullable: false})
-    writerId : number;
+    @Column({type: "int", nullable: false})
+    writerId: number;
 
     @ManyToOne(() => User, user => user.posts)
     writer: User;
 
-    @Column({nullable: false})
+    @Column({type: "varchar", nullable: false})
     title: string;
 
-    @Column({nullable: true})
+    @Column({type: "varchar", nullable: true})
     subTitle: string;
 
-    @Column({nullable: true})
+    @Column({type: "longtext", nullable: true})
     content: string;
 }

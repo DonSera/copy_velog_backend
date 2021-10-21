@@ -4,16 +4,16 @@ import {Post} from "./Post";
 @Entity('user')
 export class User extends BaseEntity {
 
-    @PrimaryGeneratedColumn()
+    @PrimaryGeneratedColumn({type: "int",})
     id: number;
 
-    @Column({unique: true, nullable: false})
+    @Column({type: "varchar", unique: true, nullable: false})
     email: string;
 
-    @Column({nullable: false})
+    @Column({type: "varchar", nullable: false})
     password: string;
 
-    @Column({nullable: true})
+    @Column({type: "varchar", nullable: true})
     name: string;
 
     @OneToMany(() => Post, post => post.writerId)
