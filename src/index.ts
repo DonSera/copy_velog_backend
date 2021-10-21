@@ -312,6 +312,27 @@ createConnection().then(async connection => {
         console.log(json.message);
     })
 
+    app.get('/getTagPost', async (req, res) => {
+        // tag 값을 가진 모든 게시물을 나타낸다.
+        const json = {info: [], status: false, message: 'Can not find tag'};
+        const tagText = req.query.tag;
+        try {
+            const postTags = await postTagRepo.find({where: {tagTag: tagText}});
+            for (let index = 0; index < postTags.length; index++) {
+                const postTag = postTags[index];
+                const postInfo = await postRepo.findOne({where: {id: postTag.postId}});
+                json.info.push(postInfo);
+            }
+            json.status = true;
+            json.message = "find posts by tags is success";
+
+            res.json(json);
+        } catch (e) {
+            console.log(e)
+            res.json(json);
+        }
+        console.log(json.message);
+    })
 
     app.get('/', async function (req, res) {
         res.send("get '/' server");
