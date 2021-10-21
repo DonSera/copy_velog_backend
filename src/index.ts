@@ -152,6 +152,17 @@ createConnection().then(async connection => {
 
     const postRepo = connection.getRepository(Post);
 
+    app.get('/getWriterName', async (req, res) => {
+        const postId = req.query.id;
+        const postInfo = await postRepo.findOne({id: postId});
+        const userInfo = await userRepo.findOne({id: postInfo.writerId});
+        res.json({
+            status: true,
+            message: 'get writer name success',
+            writerName: userInfo.name
+        })
+    })
+
     app.post('/getPost', async (req, res) => {
             let postInfo;
             let message;
