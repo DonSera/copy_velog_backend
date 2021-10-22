@@ -316,6 +316,24 @@ createConnection().then(async connection => {
         console.log(resJson.message);
     })
 
+    app.post('/deletePost', async (req, res) => {
+        const resJson = initially(RES);
+        try {
+            const postId = req.body.postId;
+            await postRepo.delete({id: postId});
+            await postTagRepo.delete({postId: postId});
+
+            resJson.status = true;
+            resJson.message = "delete post success";
+
+        } catch (e) {
+            console.log(e);
+            resJson.message = 'fail remove post';
+        }
+        res.json(resJson);
+        console.log(resJson.message)
+    })
+
     app.get('/myPage', async (req, res) => {
         // 사용자 이름으로 사용자가 작성한 게시물 정보를 반환
         const resJson = initially(RES);
