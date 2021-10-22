@@ -17,7 +17,10 @@ export class User extends BaseEntity {
     name: string;
 
     @Column({type: "varchar", default: "https://i.ibb.co/ypzwkK8/2021-10-22-11-41-58.png"})
-    img: string;
+    thumbNail: string;
+
+    @Column({type: "longtext", default: null})
+    intro: string;
 
     @OneToMany(() => Post, post => post.writerId)
     posts: Post[];
