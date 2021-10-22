@@ -5,7 +5,7 @@ import {User} from "./entity/User";
 import {Post} from "./entity/Post";
 import {Tag} from "./entity/Tag";
 import {PostTag} from "./entity/PostTag";
-import {initially, RES} from "./lib/initial";
+import {BRIEF, DEFAULT, DETAIL, initially, RES, USER, WRITER} from "./lib/initial";
 import {setInfo} from "./lib/setInfo";
 
 const express = require('express');
@@ -32,24 +32,9 @@ createConnection().then(async connection => {
     const tagRepo = connection.getRepository(Tag);
     const postTagRepo = connection.getRepository(PostTag);
 
-
-    function initiallyUserInfo() {
-        return {
-            email: undefined,
-            name: undefined,
-            id: undefined,
-            status: false,
-            message: "Undefined user"
-        };
-    }
-
-
     app.post('/newName', async (req, res) => {
         // 이름 재 설정하기
-        const message = {
-            status: false,
-            message: ""
-        };
+        const resJson = initially(RES);
 
         const inputId = req.body.id;
         const inputEmail = req.body.email;
@@ -57,53 +42,56 @@ createConnection().then(async connection => {
         const inputNewName = req.body.name;
 
         if (await userRepo.findOne({name: inputNewName})) {
-            message.message = "another user is already using it";
+            // 이미 다른 사용자가 이름을 사용하고 있는 경우
+            resJson.message = "another user is already using it";
         } else {
             if (await userRepo.findOne({email: inputEmail, password: inputPW})) {
-                // 입력 이메일과 비밀번호가 존재함
+                // 입력 이메일과 비밀번호가 존재함 = 이름을 변경할 수 있음
                 const userObjEmailPW = await userRepo.findOne({email: inputEmail, password: inputPW});
                 if (userObjEmailPW.id === inputId && await userRepo.findOne({id: inputId})) {
+
                     const userObjId = await userRepo.findOne({id: inputId});
                     userObjId.name = inputNewName;
                     await userRepo.save(userObjId);
-                    message.status = true;
-                    message.message = "Name change success";
+
+                    resJson.status = true;
+                    resJson.message = "Name change success";
                 } else {
-                    message.message = "Can not find User"
+                    resJson.message = "Can not find User"
                 }
             } else {
-                message.message = "password miss match"
+                resJson.message = "password miss match"
             }
         }
-        console.log(message.message);
-        res.json(message);
+        res.json(resJson);
+        console.log(resJson.message);
     });
 
     app.post('/id', async (req, res) => {
         // 사용자 id로 사용자 정보를 넘긴다.
-        const userInfo = initiallyUserInfo();
+        const resJson = initially(RES);
+        const userInfo = initially(USER);
 
         const inputId = req.body.id;
 
         if (await userRepo.findOne({id: inputId})) {
             const userObj = await userRepo.findOne({id: inputId});
-            setInfo(userInfo, {
-                email: userObj.email,
-                name: userObj.name,
-                id: userObj.id,
-                status: true,
-                message: "Auto login success"
-            });
+            setInfo(userInfo, userObj);
+
+            resJson.info = userInfo;
+            resJson.status = true;
+            resJson.message = "Auto login success";
         } else {
             setInfo(userInfo, {message: "Id miss match"});
         }
-        console.log(userInfo.message);
         res.json(userInfo);
+        console.log(userInfo.message);
     });
 
     app.post('/login', async (req, res) => {
         // 이메일과 비밀번호로 로그인
-        const userInfo = initiallyUserInfo();
+        const resJson = initially(RES);
+        const userInfo = initially(USER);
 
         const inputEmail = req.body.email;
         const inputPassword = req.body.password;
@@ -112,32 +100,32 @@ createConnection().then(async connection => {
             const userObj = await userRepo.findOne({email: inputEmail})
             if (userObj.password === inputPassword) {
                 // 성공 했을 때만 이메일과 이름을 넣어 보낸다.
-                setInfo(userInfo, {
-                    email: userObj.email,
-                    name: userObj.name,
-                    id: userObj.id,
-                    status: true,
-                    message: "Login success"
-                });
+                setInfo(userInfo, userObj);
+
+                resJson.info = userInfo;
+                resJson.status = true;
+                resJson.message = "Login success";
             } else {
-                setInfo(userInfo, {message: "password miss match"});
+                resJson.message = "password miss match";
             }
         } else {
-            setInfo(userInfo, {message: "email miss match"});
+            resJson.message = "email miss match";
         }
-        console.log(userInfo.message);
-        res.json(userInfo);
+        res.json(resJson);
+        console.log(resJson.message);
     });
 
     app.post('/signup', async (req, res) => {
         // 이메일과 비밀번호로 회원가입 -> 로그인 완료
-        const userInfo = initiallyUserInfo();
+        const resJson = initially(RES);
+        const userInfo = initially(USER);
 
         const inputEmail = req.body.email;
         const inputPassword = req.body.password;
 
         if (await userRepo.findOne({email: inputEmail})) {
-            setInfo(userInfo, {message: "this email already exist"});
+            // 이미 해당 이메일이 존재하는 경우
+            resJson.message = "this email already exist";
         } else {
             // 이메일, 비밀번호, 기본이름 저장
             const user = new User();
@@ -145,103 +133,108 @@ createConnection().then(async connection => {
             user.password = inputPassword;
             user.name = inputEmail.split('@')[0];
             await userRepo.save(user);
-            const userObj = await userRepo.findOne({email: inputEmail});
 
-            // 저장된 값으로 부르기
-            setInfo(userInfo, {
-                email: userObj.email,
-                name: userObj.name,
-                id: userObj.id,
-                status: true,
-                message: "Sign up success"
-            });
+            // 저장된 값 불러오기
+            const userObj = await userRepo.findOne({email: inputEmail});
+            setInfo(userInfo, userObj);
+
+            resJson.info = userInfo;
+            resJson.status = true;
+            resJson.message = "sign up success";
         }
-        console.log(userInfo.message);
-        res.json(userInfo);
+        res.json(resJson);
+        console.log(resJson.message);
     });
 
     app.get('/getWriterName', async (req, res) => {
         // postId로 사용자 이름 반환
+        const resJson = initially(RES);
         const postId = req.query.id;
-        const postInfo = await postRepo.findOne({id: postId});
-        const userInfo = await userRepo.findOne({id: postInfo.writerId});
-        res.json({
-            status: true,
-            message: 'get writer name success',
-            writerName: userInfo.name
-        })
+
+        try {
+            // 게시물 id로 작성자 정보를 찾는다.
+            const postInfo = await postRepo.findOne({id: postId});
+            const userInfo = await userRepo.findOne({id: postInfo.writerId});
+            resJson.status = true;
+            resJson.message = "get writer name success";
+            resJson.info = {name: userInfo.name};
+        } catch (e) {
+            console.log(e)
+            resJson.message = "can not find writer name"
+        }
+        res.json(resJson);
+        console.log(resJson.message);
     })
 
     app.post('/getPost', async (req, res) => {
         // 게시물 정보를 반환
-        let postInfo;
-        let message;
+        const resJson = initially(RES);
         if (req.body.id === '') {
             // id가 넘어오지 않았으면 전체 게시물 정보를 넘긴다.
-            postInfo = await postRepo.find({order: {date: "DESC"}});
-            let boardInfo = [];
-            for (let index = 0; index < postInfo.length; index++) {
-                const post = postInfo[index];
-                const writerInfo = await userRepo.findOne({id: post.writerId});
+            let boards = [];
+            const posts = await postRepo.find({order: {date: "DESC"}});
+            for (let index = 0; index < posts.length; index++) {
+                const postInfo = posts[index];
+                const userInfo = await userRepo.findOne({id: postInfo.writerId});
 
-                let subTitle = post.subTitle;
-                if (post.subTitle === '') {
-                    subTitle = post.content.split('\n')[0];
-                }
+                const postDefault = initially(DEFAULT);
+                const boardInfo = initially(BRIEF);
+                const writerInfo = initially(WRITER);
 
-                boardInfo.push({
-                    id: post.id,
-                    title: post.title,
-                    subTitle: subTitle,
-                    img: "",
-                    date: post.date,
-                    writerInfo: {
-                        id: writerInfo.id,
-                        name: writerInfo.name,
-                        thumbNail: writerInfo.img
-                    },
-                    heartNum: 0,
-                    commentNum: 0
-                })
+                // id, title, date, heartNum, writerInfo, tags
+                setInfo(postDefault, postInfo);
+                setInfo(writerInfo, userInfo);
+                postDefault.heartNum = 0;
+                postDefault.writerInfo = writerInfo;
+                postDefault.tags = []
+
+
+                // suTitle, commentNum, img
+                setInfo(boardInfo, postInfo);
+                boardInfo.commentNum = 0;
+                boardInfo.subTitle = postInfo.subTitle === ''
+                    ? postInfo.content.split('\n')[0]
+                    : postInfo.subTitle;
+                boardInfo.img = '';
+
+                Object.assign(boardInfo, postDefault);
+
+                boards.push(boardInfo);
             }
-            message = "get post success";
-            res.json(
-                {
-                    status: true,
-                    message: message,
-                    board: boardInfo
-                })
+            resJson.info = boards;
+            resJson.status = true;
+            resJson.message = "get post success";
         } else {
             // postId 값에 맞는 세부 정보를 보내 준다.
-            postInfo = await postRepo.findOne({id: req.body.id});
-            const writerInfo = await userRepo.findOne({id: postInfo.writerId});
+            const postInfo = await postRepo.findOne({id: req.body.id});
+            const userInfo = await userRepo.findOne({id: postInfo.writerId});
 
             const postTags = await postTagRepo.find({where: {postId: req.body.id}});
             const tagTexts = postTags.map(tag => tag.tagTag);
 
-            message = "get postInfo success";
-            res.json(
-                {
-                    status: true,
-                    message: message,
-                    info: {
-                        id: postInfo.id,
-                        title: postInfo.title,
-                        subTitle: postInfo.subTitle,
-                        content: postInfo.content,
-                        date: postInfo.date,
-                        writerInfo: {
-                            id: writerInfo.id,
-                            name: writerInfo.name,
-                            thumbNail: "data:image/png;base64,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"
-                        },
-                        tags: tagTexts,
-                        heart: [],
-                        comment: []
-                    }
-                })
+            const postDefault = initially(DEFAULT);
+            const postDetail = initially(DETAIL);
+            const writerInfo = initially(WRITER);
+
+            // id, title, date, writerInfo, heartNum, tags
+            setInfo(postDefault, postInfo);
+            setInfo(writerInfo, userInfo);
+            postDefault.heartNum = 0;
+            postDefault.tags = tagTexts;
+            postDefault.writerInfo = writerInfo;
+
+            // subTitle, content, comment
+            setInfo(postDetail, postInfo);
+            postDetail.comment = []
+
+            Object.assign(postDetail, postDefault);
+
+            resJson.info = postDetail;
+            resJson.status = true;
+            resJson.message = "get postInfo success";
         }
-        console.log(message);
+        res.json(resJson);
+        console.log(resJson.message);
     })
 
 
@@ -264,24 +257,26 @@ createConnection().then(async connection => {
             post.subTitle = subTitle;
             post.content = content;
             const getPost = await postRepo.save(post);
+
+            // 저장한 게시물의 id 가져오기
             const postId = getPost.id;
 
+            // 태그 저장 및 게시물과 연결
             for (let index = 0; index < tags.length; index++) {
                 const tagText = tags[index];
                 if (!await tagRepo.findOne({tag: tagText})) {
+                    // 이미 저장된 태그가 아니라면 저장
                     const tag = new Tag();
                     tag.tag = tagText;
                     await tagRepo.save(tag);
                 }
-
+                // 태그와 게시물 연결
                 const tag = await tagRepo.findOne({tag: tagText});
-
                 const postTag = new PostTag();
                 postTag.postId = postId;
                 postTag.tagTag = tag.tag;
                 await postTagRepo.save(postTag);
             }
-
             resJson.status = true;
             resJson.message = "post success";
         } catch (e) {
@@ -294,44 +289,50 @@ createConnection().then(async connection => {
 
     app.get('/myPage', async (req, res) => {
         // 사용자 이름으로 사용자가 작성한 게시물 정보를 반환
-        const json = {info: [], status: false, message: 'Can not find'};
+        const resJson = initially(RES);
         const userName = req.query.name;
         try {
             if (await userRepo.findOne({name: userName})) {
                 const userInfo = await userRepo.findOne({name: userName});
                 const userId = userInfo.id;
-                json.info = await postRepo.find({where: {writerId: userId}, order: {date: "DESC"}});
-                json.status = true;
-                json.message = "get my page post info success";
-                res.json(json);
+
+                resJson.info = await postRepo.find({
+                    where: {writerId: userId},
+                    order: {date: "DESC"}
+                });
+                resJson.status = true;
+                resJson.message = "get my page post info success";
+
             }
         } catch (e) {
             console.log(e);
-            res.json(json);
+            resJson.message = "Can not find user post";
         }
-        console.log(json.message);
+        res.json(resJson);
+        console.log(resJson.message);
     })
 
     app.get('/getTagPost', async (req, res) => {
         // tag 값을 가진 모든 게시물을 나타낸다.
-        const json = {info: [], status: false, message: 'Can not find tag'};
+        const resJson = initially(RES);
         const tagText = req.query.tag;
         try {
             const postTags = await postTagRepo.find({where: {tagTag: tagText}});
+            const posts = [];
             for (let index = 0; index < postTags.length; index++) {
                 const postTag = postTags[index];
                 const postInfo = await postRepo.findOne({where: {id: postTag.postId}});
-                json.info.push(postInfo);
+                posts.push(postInfo);
             }
-            json.status = true;
-            json.message = "find posts by tags is success";
-
-            res.json(json);
+            resJson.info = posts;
+            resJson.status = true;
+            resJson.message = "find posts by tags is success";
         } catch (e) {
             console.log(e)
-            res.json(json);
+            resJson.message = "can not find tag post"
         }
-        console.log(json.message);
+        res.json(resJson);
+        console.log(resJson.message);
     })
 
     app.get('/', async function (req, res) {
