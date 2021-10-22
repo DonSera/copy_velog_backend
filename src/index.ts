@@ -7,6 +7,7 @@ import {Tag} from "./entity/Tag";
 import {PostTag} from "./entity/PostTag";
 import {BRIEF, DEFAULT, DETAIL, initially, RES, USER, WRITER} from "./lib/initial";
 import {setInfo} from "./lib/setInfo";
+import * as console from "console";
 
 const express = require('express');
 const cors = require('cors');
@@ -67,12 +68,13 @@ createConnection().then(async connection => {
         console.log(resJson.message);
     });
 
-    app.post('/id', async (req, res) => {
+    app.post('/autoLogin', async (req, res) => {
         // 사용자 id로 사용자 정보를 넘긴다.
         const resJson = initially(RES);
         const userInfo = initially(USER);
 
         const inputId = req.body.id;
+        console.log(`get id ${inputId}`)
 
         if (await userRepo.findOne({id: inputId})) {
             const userObj = await userRepo.findOne({id: inputId});
@@ -82,9 +84,9 @@ createConnection().then(async connection => {
             resJson.status = true;
             resJson.message = "Auto login success";
         } else {
-            setInfo(userInfo, {message: "Id miss match"});
+            resJson.message = "Id miss match";
         }
-        res.json(userInfo);
+        res.json(resJson);
         console.log(userInfo.message);
     });
 
@@ -262,6 +264,53 @@ createConnection().then(async connection => {
         } catch (e) {
             console.log(e);
             resJson.message = "post failed";
+        }
+        res.json(resJson);
+        console.log(resJson.message);
+    })
+
+    app.post('/fixedPost', async (req, res) => {
+        // 게시물 수정
+        const resJson = initially(RES);
+        try {
+            const postId = req.body.postId;
+            const title = req.body.title;
+            const subTitle = req.body.subTitle;
+            const content = req.body.content;
+            const writerId = req.body.writerId;
+            const tags = req.body.tags;
+
+            const postInfo = await postRepo.findOne({id: postId});
+            postInfo.title = title;
+            postInfo.subTitle = subTitle;
+            postInfo.content = content;
+            postInfo.writerId = writerId;
+            await postRepo.save(postInfo);
+
+            await postTagRepo.delete({postId: postId});
+
+            for (let index = 0; index < tags.length; index++) {
+                const tagText = tags[index];
+                if (!await tagRepo.findOne({tag: tagText})) {
+                    // 이미 저장된 태그가 아니라면 저장
+                    const tag = new Tag();
+                    tag.tag = tagText;
+                    await tagRepo.save(tag);
+                }
+                // 태그와 게시물 연결
+                const tag = await tagRepo.findOne({tag: tagText});
+                const postTag = new PostTag();
+                postTag.postId = postId;
+                postTag.tagTag = tag.tag;
+                await postTagRepo.save(postTag);
+            }
+
+            resJson.status = true;
+            resJson.message = "save fixed post success";
+
+        } catch (e) {
+            console.log(e)
+            resJson.message = 'fixed post failed'
         }
         res.json(resJson);
         console.log(resJson.message);
