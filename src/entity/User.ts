@@ -16,6 +16,9 @@ export class User extends BaseEntity {
     @Column({type: "varchar", nullable: true, unique: true})
     name: string;
 
+    @Column({type: "varchar", default: "https://i.ibb.co/ypzwkK8/2021-10-22-11-41-58.png"})
+    img: string;
+
     @OneToMany(() => Post, post => post.writerId)
     posts: Post[];
 
