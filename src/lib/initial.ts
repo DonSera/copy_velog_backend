@@ -1,4 +1,5 @@
 const RES = 'resJson';
+const USER = 'userInfo';
 const WRITER = 'writerInfo';
 const LOGIN = 'loginInfo';
 const DEFAULT = 'postDefaultInfo';
@@ -18,6 +19,13 @@ function initially(type = RES) {
             name: null,
             thumbNail: null,
             intro: null
+        }
+    }
+    if (type === USER) {
+        return {
+            id: null,
+            name: null,
+            email: null
         }
     }
     if (type === LOGIN) {
@@ -55,6 +63,6 @@ function initially(type = RES) {
 
 export {
     initially,
-    RES, WRITER, LOGIN, DETAIL, DEFAULT, BRIEF
+    RES, USER, WRITER, LOGIN, DETAIL, DEFAULT, BRIEF
 };
 
