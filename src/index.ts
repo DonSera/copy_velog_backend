@@ -146,26 +146,6 @@ createConnection().then(async connection => {
         console.log(resJson.message);
     });
 
-    app.get('/getWriterName', async (req, res) => {
-        // postId로 사용자 이름 반환
-        const resJson = initially(RES);
-        const postId = req.query.id;
-
-        try {
-            // 게시물 id로 작성자 정보를 찾는다.
-            const postInfo = await postRepo.findOne({id: postId});
-            const userInfo = await userRepo.findOne({id: postInfo.writerId});
-            resJson.status = true;
-            resJson.message = "get writer name success";
-            resJson.info = {name: userInfo.name};
-        } catch (e) {
-            console.log(e)
-            resJson.message = "can not find writer name"
-        }
-        res.json(resJson);
-        console.log(resJson.message);
-    })
-
     app.post('/getPost', async (req, res) => {
         // 게시물 정보를 반환
         const resJson = initially(RES);
